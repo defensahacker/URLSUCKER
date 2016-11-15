@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# Find embedded URLs in the specified file or URI
+# Sucks embedded URLs in the specified file or URI
 # TODO: Integrate with ZAP or burpsuite
 #
 # August 2016
