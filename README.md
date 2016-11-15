@@ -6,6 +6,9 @@ Useful to pentest Web Applications.
 
 It could be integrated to ZAP or Burp Suite as well. 
 
+DISCLAMER: Still alpha phase. Returns some false positives as searches extensively for strings that seem URLs (nonetheless this is better than traditional web crawlers that skip many URLs embedded into JavaScript code) and recursive mode must be improved. But used it as a POC.
+
+
 ~
 spinfoo
 
