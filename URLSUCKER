@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+# 
+# Find embedded URLs in the specified file or URI
+# TODO: Integrate with ZAP or burpsuite
+#
+# August 2016
+# (c) spinfoo
+#
+# Usage: URLSUCKER [-u url] [-f file] [-r]
+#
+#
+
+use strict;
+use LWP::Simple;
+use Getopt::Long;
+use File::Slurp;
+#use Pod::Usage;
+
+my $ARGV;
+my @urls;
+my $help;
+my $url;
+my $file;
+my $recursive;
+
+
+GetOptions(
+	'help|?' => \$help,
+	'u=s' => \$url,
+	'f=s' => \$file,
+	'r' => \$recursive
+);
+
+sub extract {
+	my $body= shift;
+	my @p= split /\n/, $body;
+	my %matches;
+	foreach my $line (@p) {
+		while ($line =~ /("[-\w\.\/:?=]+"||'[-\w\.\/:?=]+'||\([-\w\.\/:?=]+\))/g) {
+			$matches{$1}= $1 if not exists $matches{$1};
+		}
+	}
+	for my $i (keys %matches) {
+		if (length($i) > 3) {
+			my $u= substr $i, 1, -1;
+			if (!($u ~~ @urls)) {
+				push @urls, $u;
+			}
+		}
+	}
+	undef %matches;
+}
+
+sub show() {
+	foreach (sort @urls) {
+		print $_,"\n";
+	}
+}
+
+if ($help || ($url && $file) || (!$url && !$file)) {
+	print "Syntax: $0 [-u url] [-f file] [-r]\n";
+} elsif ($url) {
+	if (head($url)) {
+		my @upa= split /\//, $url;
+		extract(get($url));
+		if ($recursive) {
+			my $baseurl= $upa[0]."//".$upa[1].$upa[2]."/";
+			my $robots= $baseurl."robots.txt";
+			extract(get($robots));
+		}
+		show();
+	} else {
+		print "Could not connect to $url\n";
+		exit 1;
+	}
+} elsif ($file) {
+	my $text= read_file($file) or die("Could not read $file");
+	extract($text);
+	show();
+}
+
+exit 0;
+
