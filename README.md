@@ -3,7 +3,7 @@
 
 Ideal to parse strings from CSS or JavaScript files as many or all the web crawlers and spiders do not scan through JavaScript code, missing many interesting resources such as API calls, webservices, etc.
 
-So far URLSUCKER is quite useful to pentest Web Applications.
+So far **URLSUCKER** is quite useful to pentest Web Applications.
 
 It could be integrated to ZAP or Burp Suite as well. 
 
@@ -17,12 +17,21 @@ It could be integrated to ZAP or Burp Suite as well.
 
 ## Example ##
 ```
-./URLSUCKER -u http://localhost/login.js
+$ ./URLSUCKER -u http://192.168.1.1/index.php
+[ABSOLUTE URL] http://192.168.1.1/help/license.html
+[RELATIVE URL] http://192.168.1.1/console.png
+[RELATIVE URL] http://192.168.1.1/green.png
+[RELATIVE URL] http://192.168.1.1/help.png
+[EXTERNAL ABSOLUTE URL] http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
+[RELATIVE URL] http://192.168.1.1/license.png
+[RELATIVE URL] http://192.168.1.1/mikrotik_logo.png
+[RELATIVE URL] http://192.168.1.1/winbox.png
 ```
 
 
 ### DISCLAMER ###
 Use at your own risk in an environment that you are allowed to attack.
+
 
 ~
 spinfoo
