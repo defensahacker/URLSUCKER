@@ -6,7 +6,7 @@
 # August 2016
 # (c) spinfoo
 #
-# Usage: URLSUCKER [-u url] [-f file] [-r]
+# Usage: URLSUCKER ([-u url] | [-f file]) [-v]
 #
 #
 
@@ -14,21 +14,20 @@ use strict;
 use LWP::Simple;
 use Getopt::Long;
 use File::Slurp;
-#use Pod::Usage;
 
 my $ARGV;
 my @urls;
 my $help;
 my $url;
 my $file;
-my $recursive;
+my $verbose;
 
 
 GetOptions(
 	'help|?' => \$help,
 	'u=s' => \$url,
 	'f=s' => \$file,
-	'r' => \$recursive
+	'v' => \$verbose
 );
 
 sub extract {
@@ -57,18 +56,31 @@ sub show() {
 	}
 }
 
+sub check() {
+	my @upa= split /\//, $url;
+	my $baseurl= $upa[0]."//".$upa[1].$upa[2];
+	foreach (sort @urls) {
+		if ( /^\/\// ) {
+			if (head($upa[0].$_)) { print "[EXTERNAL ABSOLUTE URL] ".$upa[0].$_."\n"; }
+		} elsif ( /^http(s)?:\/\// || head($_) ) {
+			print "[EXTERNAL ABSOLUTE URL] ".$_."\n";
+		} elsif ( /^\// || head($baseurl.$_) ) {
+			print "[ABSOLUTE URL] ".$baseurl.$_."\n";
+		} elsif ( head($baseurl."/".$_) ) {
+			print "[RELATIVE URL] ".$baseurl."/".$_."\n";
+		} elsif ($verbose) {
+			print "Found string $_\n";
+		}
+	}
+}
+
+
 if ($help || ($url && $file) || (!$url && !$file)) {
-	print "Syntax: $0 [-u url] [-f file] [-r]\n";
+	print "Syntax: $0 ([-u url] | [-f file]) [-v]\n";
 } elsif ($url) {
 	if (head($url)) {
-		my @upa= split /\//, $url;
 		extract(get($url));
-		if ($recursive) {
-			my $baseurl= $upa[0]."//".$upa[1].$upa[2]."/";
-			my $robots= $baseurl."robots.txt";
-			extract(get($robots));
-		}
-		show();
+		check();
 	} else {
 		print "Could not connect to $url\n";
 		exit 1;
