@@ -1,17 +1,22 @@
 #!/usr/bin/perl -w
 # 
 # Sucks embedded URLs in the specified file or URI
-# TODO: Integrate with ZAP or burpsuite
+#
+# TODO:
+#   * Minor bug: If url ends with / add "?test" or "#test" to avoid problems with parsing
+#   * Integrate with ZAP or burpsuite
+#
+#
+# Usage: URLSUCKER ([-u url] | [-f file]) [-v]
+#        Give as a parameter a url (-u) or a file (-f) to scan.
+#        -v parameter gives you verbose output, showing the response code and the potential URL found
 #
 # August 2016
 # (c) spinfoo
-#
-# Usage: URLSUCKER ([-u url] | [-f file]) [-v]
-#
-#
+
 
 use strict;
-use LWP::Simple;
+use LWP::UserAgent;
 use Getopt::Long;
 use File::Slurp;
 
@@ -58,18 +63,35 @@ sub show() {
 
 sub check() {
 	my @upa= split /\//, $url;
-	my $baseurl= $upa[0]."//".$upa[1].$upa[2];
+	my $basepath=join("/", @upa[0..$#upa-1]);
+	my $baseurl=join("/", @upa[0..2]);
+	my $ua= LWP::UserAgent->new;
+	my $purl;
+	my $ptext;
+	$ua->max_redirect(0);
+	$ua->agent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
+
 	foreach (sort @urls) {
-		if ( /^\/\// ) {
-			if (head($upa[0].$_)) { print "[EXTERNAL ABSOLUTE URL] ".$upa[0].$_."\n"; }
-		} elsif ( /^http(s)?:\/\// || head($_) ) {
-			print "[EXTERNAL ABSOLUTE URL] ".$_."\n";
-		} elsif ( /^\// || head($baseurl.$_) ) {
-			print "[ABSOLUTE URL] ".$baseurl.$_."\n";
-		} elsif ( head($baseurl."/".$_) ) {
-			print "[RELATIVE URL] ".$baseurl."/".$_."\n";
-		} elsif ($verbose) {
-			print "Found string $_\n";
+		if (/^\/\//) {
+			$purl= $upa[0].$_;
+			$ptext= "EXTERNAL ABSOLUTE URL";
+		} elsif (/^http(s)?:\/\//) {
+			$purl= $_;
+			$ptext= "EXTERNAL ABSOLUTE URL";
+		} elsif ( /^\// ) {
+			$purl= $baseurl.$_;
+			$ptext= "ABSOLUTE URL";
+		} else {
+			$purl= $basepath."/".$_;
+			$ptext= "RELATIVE URL";
+		}
+
+		my $response= $ua->head($purl);
+		if ($response->code == 200) {
+			print "[$ptext] ".$purl."\n";
+		}
+		elsif ($response->code != 200 && $verbose) {
+			print "[".$response->code."] Found string $_\n";
 		}
 	}
 }
@@ -78,8 +100,11 @@ sub check() {
 if ($help || ($url && $file) || (!$url && !$file)) {
 	print "Syntax: $0 ([-u url] | [-f file]) [-v]\n";
 } elsif ($url) {
-	if (head($url)) {
-		extract(get($url));
+	my $ua= LWP::UserAgent->new;
+	$ua->agent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
+	my $response= $ua->get($url);
+	if ($response->is_success) {
+		extract($response->decoded_content);
 		check();
 	} else {
 		print "Could not connect to $url\n";
