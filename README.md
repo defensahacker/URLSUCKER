@@ -29,10 +29,9 @@ $ ./URLSUCKER -u http://192.168.1.1/index.php
 ```
 
 
-### DISCLAMER ###
+### DISCLAIMER ###
 Use at your own risk in an environment that you are allowed to attack.
 
 
 ~
-spinfoo
-
+(c) spinfoo
