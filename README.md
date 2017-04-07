@@ -9,11 +9,12 @@ It could be integrated to ZAP or Burp Suite as well.
 
 ## Syntax ##
 ```
-./URLSUCKER ([-u url] | [-f file]) [-v]
+./URLSUCKER [-v] [-t <timeout>] ([-u url] | [-f file])
 ```
 
 - Give as a parameter a url (```-u```) or a file (```-f```) to scan.
 - ```-v``` parameter gives you verbose output, showing the response code and the potential URL found for manual analysis.
+- ```-t <timeout>``` parameter establishes a timeout between requests to evade WAF / security systems (in seconds)
 
 ## Example ##
 ```

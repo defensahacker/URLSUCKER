@@ -7,9 +7,10 @@
 #   * Integrate with ZAP or burpsuite
 #
 #
-# Usage: URLSUCKER ([-u url] | [-f file]) [-v]
+# Usage: URLSUCKER [-v] [-t <timeout>] ([-u url] | [-f file])
 #        Give as a parameter a url (-u) or a file (-f) to scan.
 #        -v parameter gives you verbose output, showing the response code and the potential URL found
+#        -t parameter establishes a timeout between requests to evade WAF / security systems (in seconds)
 #
 # August 2016
 # (c) spinfoo
@@ -26,13 +27,15 @@ my $help;
 my $url;
 my $file;
 my $verbose;
+my $timeout=0;
 
 
 GetOptions(
 	'help|?' => \$help,
 	'u=s' => \$url,
 	'f=s' => \$file,
-	'v' => \$verbose
+	'v' => \$verbose,
+	't=i' => \$timeout
 );
 
 sub extract {
@@ -86,6 +89,9 @@ sub check() {
 			$ptext= "RELATIVE URL";
 		}
 
+		if ($timeout) {
+			sleep($timeout); # seconds
+		}
 		my $response= $ua->head($purl);
 		if ($response->code == 200) {
 			print "[$ptext] ".$purl."\n";
@@ -98,7 +104,7 @@ sub check() {
 
 
 if ($help || ($url && $file) || (!$url && !$file)) {
-	print "Syntax: $0 ([-u url] | [-f file]) [-v]\n";
+	print "Syntax: $0 [-v] [-t <timeout>] ([-u url] | [-f file])\n";
 } elsif ($url) {
 	my $ua= LWP::UserAgent->new;
 	$ua->agent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
