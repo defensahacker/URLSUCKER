@@ -108,6 +108,11 @@ if ($help || ($url && $file) || (!$url && !$file)) {
 } elsif ($url) {
 	my $ua= LWP::UserAgent->new;
 	$ua->agent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
+        $ua->ssl_opts(
+                SSL_verify_mode => 0,
+                verify_hostname => 0,
+        );
+	#$ua->proxy(['http', 'https'], 'http://127.0.0.1:8080/');
 	my $response= $ua->get($url);
 	if ($response->is_success) {
 		extract($response->decoded_content);
