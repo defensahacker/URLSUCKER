@@ -7,13 +7,14 @@
 #   * Integrate with ZAP or burpsuite
 #
 #
-# Usage: URLSUCKER [-v] [-t <timeout>] ([-u url] | [-f file])
+# Usage: URLSUCKER [-v] [-g 1|2] [-t <timeout>] ([-u url] | [-f file])
 #        Give as a parameter a url (-u) or a file (-f) to scan.
 #        -v parameter gives you verbose output, showing the response code and the potential URL found
 #        -t parameter establishes a timeout between requests to evade WAF / security systems (in seconds)
+#        -g parameter shows all strings found even if they do not seem a path or folder
 #
 # August 2016
-# (c) spinfoo
+# (c) defensahacker.com
 
 
 use strict;
@@ -28,6 +29,7 @@ my $url;
 my $file;
 my $verbose;
 my $timeout=0;
+my $greedy=1;
 
 
 GetOptions(
@@ -35,7 +37,8 @@ GetOptions(
 	'u=s' => \$url,
 	'f=s' => \$file,
 	'v' => \$verbose,
-	't=i' => \$timeout
+	't=i' => \$timeout,
+	'g=i' => \$greedy
 );
 
 sub extract {
@@ -43,9 +46,17 @@ sub extract {
 	my @p= split /\n/, $body;
 	my %matches;
 	foreach my $line (@p) {
-		while ($line =~ /("[-\w\.\/:?=]+"||'[-\w\.\/:?=]+'||\([-\w\.\/:?=]+\))/g) {
-			$matches{$1}= $1 if not exists $matches{$1};
+		if ($greedy == 1) {
+			#print $line;
+			while ($line =~ /("([^ "'(d]+\/[^ "')\:;,]+)")/g) {
+				$matches{$1}= $1 if not exists $matches{$1};
+			}
+		} else {
+			while ($line =~ /("[-\w\.\/:?=]+"||'[-\w\.\/:?=]+'||\([-\w\.\/:?=]+\))/g) {
+				$matches{$1}= $1 if not exists $matches{$1};
+			}
 		}
+
 	}
 	for my $i (keys %matches) {
 		if (length($i) > 3) {
@@ -92,25 +103,34 @@ sub check() {
 		if ($timeout) {
 			sleep($timeout); # seconds
 		}
-		my $response= $ua->head($purl);
+		my $response= $ua->get($purl);
 		if ($response->code == 200) {
 			print "[$ptext] ".$purl."\n";
+			#print $response->decoded_content;
 		}
 		elsif ($response->code != 200 && $verbose) {
-			print "[".$response->code."] Found string $_\n";
+			print "[".$response->code."] Found string $_ ($purl)\n";
 		}
 	}
 }
 
 
 if ($help || ($url && $file) || (!$url && !$file)) {
-	print "Syntax: $0 [-v] [-t <timeout>] ([-u url] | [-f file])\n";
+	print "Syntax: $0 [-v] [-t <timeout>] [-g 1|2] ([-u url] | [-f file])\n";
+	print "-v (verbose): Shows verbose output\n";
+	print "-t (timeout): Adds a delay between request (For WAF evasion)\n";
+	print "-g (greedy): By default, 1. If set to 2, it shows all strings found even if they do not seem a path or folder\n";
+	print "-u (url): URL to scan for strings and URLs\n";
+	print "-f (filename): Path to filename to scan for strings and URLs\n";
+	exit 1;
 } elsif ($url) {
+	# Disable SSL checks
+	$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 	my $ua= LWP::UserAgent->new;
 	$ua->agent("Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0");
         $ua->ssl_opts(
                 SSL_verify_mode => 0,
-                verify_hostname => 0,
+                verify_hostname => 0
         );
 	#$ua->proxy(['http', 'https'], 'http://127.0.0.1:8080/');
 	my $response= $ua->get($url);
