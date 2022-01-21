@@ -9,7 +9,12 @@ It could be integrated to ZAP or Burp Suite as well.
 
 ## Syntax ##
 ```
-./URLSUCKER [-v] [-t <timeout>] ([-u url] | [-f file])
+Syntax: URLSUCKER [-v] [-t <timeout>] [-g 1|2] ([-u url] | [-f file])
+-v (verbose): Shows verbose output
+-t (timeout): Adds a delay between request (For WAF evasion)
+-g (greedy): By default, 1. If set to 2, it shows all strings found even if they do not seem a path or folder
+-u (url): URL to scan for strings and URLs
+-f (filename): Path to filename to scan for strings and URLs
 ```
 
 - Give as a parameter a url (```-u```) or a file (```-f```) to scan.
