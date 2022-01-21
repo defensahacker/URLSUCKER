@@ -47,7 +47,6 @@ sub extract {
 	my %matches;
 	foreach my $line (@p) {
 		if ($greedy == 1) {
-			#print $line;
 			while ($line =~ /("([^ "'(d]+\/[^ "')\:;,]+)")/g) {
 				$matches{$1}= $1 if not exists $matches{$1};
 			}
@@ -56,7 +55,6 @@ sub extract {
 				$matches{$1}= $1 if not exists $matches{$1};
 			}
 		}
-
 	}
 	for my $i (keys %matches) {
 		if (length($i) > 3) {
